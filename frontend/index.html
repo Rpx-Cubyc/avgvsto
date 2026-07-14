@@ -5,379 +5,1107 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AVGVSTO USB — Crittografia hardware</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,system-ui,sans-serif;background:#0a0a0a;color:#e0e0e0;min-height:100vh}
-.container{max-width:900px;margin:0 auto;padding:1.5rem}
-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1rem;border-bottom:1px solid #1a1a1a}
-.logo{font-size:1.5rem;font-weight:700;color:#00ff88;letter-spacing:2px}
-.logo span{color:#555;font-weight:400;font-size:0.9rem;letter-spacing:0}
-.header-right{display:flex;align-items:center;gap:1rem}
-.status{display:flex;align-items:center;gap:0.5rem;font-size:0.8rem;color:#666}
-.dot{width:8px;height:8px;border-radius:50%;background:#ff4444;transition:background 0.3s}
-.dot.online{background:#00ff88}
-.dot.offline{background:#ff4444}
-.user-badge{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:0.3rem 0.8rem;font-size:0.8rem;color:#888;display:none}
-.user-badge.show{display:flex;align-items:center;gap:0.5rem}
-.user-badge .role{background:#00ff88;color:#0a0a0a;border-radius:3px;padding:0.1rem 0.4rem;font-size:0.7rem;font-weight:600}
-.logout-btn{background:none;border:1px solid #2a2a2a;color:#666;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.75rem}
-.logout-btn:hover{border-color:#ff4444;color:#ff4444}
-nav{display:flex;gap:0.25rem;margin-bottom:2rem;flex-wrap:wrap;background:#121212;border-radius:10px;padding:0.25rem}
-nav a{padding:0.5rem 1.2rem;border-radius:7px;text-decoration:none;color:#666;font-size:0.85rem;transition:all 0.2s;cursor:pointer}
-nav a:hover{color:#aaa}
-nav a.active{background:#1a1a1a;color:#00ff88}
-.page{display:none}
-.page.active{display:block}
-.card{background:#121212;border:1px solid #1a1a1a;border-radius:10px;padding:1.5rem;margin-bottom:1rem}
-.card h2{color:#00ff88;font-size:1rem;margin-bottom:1rem;font-weight:600}
-.card p{color:#666;font-size:0.85rem;margin-bottom:1rem;line-height:1.5}
-label{display:block;color:#888;font-size:0.8rem;margin-bottom:0.3rem;font-weight:500}
-input,textarea,select{width:100%;padding:0.7rem;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;color:#e0e0e0;font-size:0.9rem;margin-bottom:0.8rem;transition:border-color 0.2s}
-input:focus,textarea:focus,select:focus{outline:none;border-color:#00ff8844}
-textarea{font-family:monospace;min-height:100px;resize:vertical}
-select{cursor:pointer}
-.btn{background:#00ff88;color:#0a0a0a;border:none;padding:0.7rem 1.5rem;border-radius:6px;font-weight:600;cursor:pointer;font-size:0.9rem;transition:opacity 0.2s}
-.btn:hover{opacity:0.85}
-.btn:disabled{opacity:0.3;cursor:not-allowed}
-.btn-outline{background:transparent;border:1px solid #2a2a2a;color:#888}
-.btn-outline:hover{border-color:#00ff88;color:#00ff88}
-.btn-danger{background:#ff4444;color:#fff}
-.row{display:flex;gap:0.75rem;align-items:center}
-.row>*{flex:1}
-.row.gap-sm{gap:0.5rem}
-.output{background:#0a0a0a;border:1px solid #1a1a1a;border-radius:6px;padding:1rem;margin-top:0.8rem;font-family:monospace;font-size:0.8rem;white-space:pre-wrap;word-wrap:break-word;max-height:300px;overflow-y:auto;color:#888;display:none}
-.output.show{display:block}
-.output.success{border-color:#00ff8844;color:#e0e0e0}
-.output.error{border-color:#ff444444;color:#ff6666}
-.file-drop{border:2px dashed #2a2a2a;border-radius:8px;padding:2rem;text-align:center;color:#555;cursor:pointer;transition:all 0.2s;margin-bottom:0.8rem}
-.file-drop:hover,.file-drop.dragover{border-color:#00ff88;color:#00ff88;background:#0a1a0a}
-.file-drop.has-file{border-color:#00ff8844;background:#0a1a0a}
-.file-drop .filename{color:#00ff88;font-size:0.85rem;margin-top:0.5rem}
-.hidden{display:none}
-.flex{display:flex}
-.flex-center{align-items:center;gap:0.5rem}
-.text-center{text-align:center}
-.text-green{color:#00ff88}
-.text-muted{color:#555;font-size:0.8rem}
-.mt-1{margin-top:0.8rem}
-.mb-1{margin-bottom:0.8rem}
-.copy-btn{background:none;border:1px solid #2a2a2a;color:#555;padding:0.3rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.75rem;float:right}
-.copy-btn:hover{border-color:#00ff88;color:#00ff88}
-table{width:100%;border-collapse:collapse;font-size:0.85rem}
-th,td{padding:0.6rem;text-align:left;border-bottom:1px solid #1a1a1a;color:#888}
-th{color:#555;font-weight:600}
-tr:hover td{background:#0f0f0f}
-.toast{position:fixed;bottom:2rem;right:2rem;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:1rem 1.5rem;color:#e0e0e0;font-size:0.85rem;z-index:100;opacity:0;transform:translateY(20px);transition:all 0.3s;pointer-events:none}
-.toast.show{opacity:1;transform:translateY(0)}
-.toast.success{border-color:#00ff8844}
-.toast.error{border-color:#ff444444}
-@media(max-width:600px){.row{flex-direction:column}.container{padding:1rem}nav a{padding:0.4rem 0.8rem;font-size:0.8rem}}
+:root {
+  --bg:        #05070a;
+  --bg2:       #080c12;
+  --panel:     #0d121c;
+  --panel2:    #141c2a;
+  --border:    #1a2538;
+  --border2:   #253450;
+  --accent:    #c8a45c;
+  --accent2:   #dbb86c;
+  --accent-g:  rgba(200, 164, 92, 0.06);
+  --accent-gb: rgba(200, 164, 92, 0.18);
+  --blue:      #4a8cff;
+  --blue-g:    rgba(74, 140, 255, 0.08);
+  --red:       #ff5577;
+  --red-g:     rgba(255,85,119,0.08);
+  --gold:      #c8a45c;
+  --text:      #b8c4d8;
+  --text-mid:  #6a7a9a;
+  --text-hi:   #eaf0ff;
+  --mono:      'Space Mono', monospace;
+  --sans:      'DM Sans', sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+::selection{background:var(--accent);color:#0b0e1a;}
+
+body::after{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9997;opacity:0.5;
+}
+
+.grid-bg{
+  position:fixed;inset:0;
+  background-image:linear-gradient(var(--accent-g) 1px,transparent 1px),linear-gradient(90deg,var(--accent-g) 1px,transparent 1px);
+  background-size:80px 80px;
+  pointer-events:none;z-index:1;
+}
+
+@keyframes glitch1{0%,100%{clip-path:inset(30% 0 40% 0);transform:translate(-2px,1px);}50%{clip-path:inset(60% 0 10% 0);transform:translate(2px,-1px);}}
+@keyframes glitch2{0%,100%{clip-path:inset(10% 0 70% 0);transform:translate(3px,2px);}50%{clip-path:inset(45% 0 20% 0);transform:translate(-3px,-2px);}}
+.glitch{position:relative;display:inline-block;}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;background:transparent;}
+.glitch::before{color:var(--accent);z-index:-1;animation:glitch1 3s infinite linear alternate-reverse;opacity:0.4;}
+.glitch::after{color:var(--blue);z-index:-2;animation:glitch2 3.5s infinite linear alternate-reverse;opacity:0.2;}
+
+header{
+  position:fixed;top:0;left:0;right:0;height:72px;
+  background:rgba(5,7,10,0.88);backdrop-filter:blur(24px) saturate(180%);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 5%;z-index:1000;transition:border-color 0.4s,background 0.4s;
+}
+header.scrolled{border-bottom-color:var(--accent);background:rgba(5,7,10,0.96);}
+.logo{font-family:var(--mono);font-size:1.2rem;font-weight:700;color:var(--accent);letter-spacing:5px;text-decoration:none;display:flex;align-items:center;gap:12px;}
+.logo img{height:30px;width:auto;filter:brightness(0.9);}
+.logo-badge{font-size:0.55rem;color:var(--text-mid);letter-spacing:3px;border:1px solid var(--border2);padding:2px 10px;border-radius:40px;background:rgba(200,164,92,0.04);font-weight:400;}
+nav{display:flex;gap:2.5rem;align-items:center;}
+nav a{font-family:var(--mono);font-size:0.6rem;color:var(--text-mid);text-decoration:none;letter-spacing:2.5px;text-transform:uppercase;transition:color 0.3s;position:relative;}
+nav a:hover{color:var(--accent);}
+nav a::after{content:'';position:absolute;bottom:-6px;left:0;width:0;height:1.5px;background:var(--accent);transition:width 0.3s ease;}
+nav a:hover::after{width:100%;}
+.nav-dl{background:var(--accent);color:#0b0e1a!important;padding:8px 22px;border-radius:40px;font-family:var(--mono);font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;text-decoration:none;transition:all 0.3s;font-weight:700;}
+.nav-dl:hover{background:transparent!important;color:var(--accent)!important;border:1px solid var(--accent);box-shadow:0 0 30px var(--accent-gb);}
+.nav-dl::after{display:none!important;}
+
+/* Webapp nav link */
+.nav-webapp{color:var(--accent)!important;}
+.nav-webapp::after{background:var(--accent)!important;}
+
+.hero{
+  min-height:100vh;padding:140px 5% 80px;
+  display:flex;align-items:center;
+  position:relative;z-index:2;overflow:hidden;
+}
+.hero-glow{
+  position:absolute;top:-150px;right:-200px;
+  width:800px;height:800px;
+  background:radial-gradient(circle,rgba(200,164,92,0.06) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hero-glow2{
+  position:absolute;bottom:-200px;left:-150px;
+  width:600px;height:600px;
+  background:radial-gradient(circle,rgba(74,140,255,0.04) 0%,transparent 65%);
+  pointer-events:none;
+}
+.hero-inner{max-width:900px;position:relative;z-index:3;}
+.hero-label{
+  font-family:var(--mono);font-size:0.6rem;color:var(--accent);
+  letter-spacing:6px;text-transform:uppercase;margin-bottom:28px;
+  display:flex;align-items:center;gap:14px;
+}
+.hero-label .bar{width:60px;height:1.5px;background:var(--accent);}
+.hero h1{
+  font-family:var(--sans);font-size:clamp(2.8rem,9vw,5.8rem);font-weight:800;
+  line-height:0.92;color:var(--text-hi);text-transform:uppercase;
+  margin-bottom:28px;letter-spacing:-0.03em;
+}
+.hero h1 .hl{color:var(--accent);border-bottom:3px solid var(--accent);}
+.hero h1 .dim{color:var(--text-mid);}
+.hero-desc{
+  font-size:1.05rem;font-weight:300;color:var(--text);max-width:660px;
+  margin-bottom:44px;padding:20px 26px;
+  background:linear-gradient(90deg,var(--accent-g) 0%,transparent 90%);
+  border-left:3px solid var(--accent);
+  line-height:1.8;
+}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:14px 30px;font-family:var(--mono);font-size:0.65rem;
+  letter-spacing:2.5px;text-transform:uppercase;text-decoration:none;
+  border:1px solid transparent;transition:all 0.25s;cursor:pointer;background:transparent;
+  border-radius:2px;
+}
+.btn-primary{background:var(--accent);color:#0b0e1a;border-color:var(--accent);font-weight:700;}
+.btn-primary:hover{background:transparent;color:var(--accent);box-shadow:0 0 40px var(--accent-gb);transform:translateY(-3px);}
+.btn-outline{border-color:var(--border2);color:var(--text);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-g);}
+.btn-ghost{border-color:var(--border);color:var(--text-mid);}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text);}
+.btn-danger{background:var(--red);color:#0b0e1a;border-color:var(--red);}
+.btn-danger:hover{background:transparent;color:var(--red);box-shadow:0 0 40px rgba(255,85,119,0.2);}
+
+.hero-terminal{
+  margin-top:60px;background:var(--panel);border:1px solid var(--border2);
+  max-width:620px;border-radius:2px;overflow:hidden;
+}
+.terminal-bar{
+  background:var(--panel2);padding:10px 16px;display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--border);
+}
+.dot{width:11px;height:11px;border-radius:50%;}
+.dot-r{background:#ff5f56;}.dot-y{background:#ffbd2e;}.dot-g{background:#28c840;}
+.terminal-label{font-family:var(--mono);font-size:0.55rem;color:var(--text-mid);margin-left:6px;letter-spacing:2.5px;}
+.terminal-body{padding:16px 20px;font-family:var(--mono);font-size:0.7rem;line-height:2.2;}
+.t-dim{color:var(--text-mid);}
+.t-acc{color:var(--accent);}
+.t-red{color:var(--red);}
+.t-gold{color:var(--gold);}
+.cursor{display:inline-block;width:8px;height:14px;background:var(--accent);animation:blink 1s step-end infinite;vertical-align:middle;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+.statsbar{
+  background:var(--panel);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  padding:36px 5%;position:relative;z-index:2;
+}
+.statsbar-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:0;}
+.stat-item{text-align:center;padding:0 20px;position:relative;}
+.stat-item+.stat-item::before{content:'';position:absolute;left:0;top:10%;height:80%;width:1px;background:var(--border2);}
+.stat-val{font-family:var(--mono);font-size:2.2rem;font-weight:700;color:var(--accent);line-height:1;display:block;}
+.stat-lbl{font-family:var(--mono);font-size:0.5rem;letter-spacing:3.5px;color:var(--text-mid);text-transform:uppercase;margin-top:8px;display:block;}
+
+.section{padding:110px 5%;max-width:1300px;margin:0 auto;position:relative;z-index:2;}
+.section-label{font-family:var(--mono);font-size:0.55rem;color:var(--accent);letter-spacing:7px;text-transform:uppercase;margin-bottom:16px;display:block;}
+.section-title{font-size:clamp(1.8rem,4.5vw,3rem);font-weight:800;color:var(--text-hi);margin-bottom:16px;line-height:1.1;letter-spacing:-0.02em;}
+.section-sub{font-size:0.95rem;color:var(--text-mid);max-width:540px;margin-bottom:60px;line-height:1.8;}
+
+.arch-grid{display:grid;grid-template-columns:repeat(3,1fr);background:var(--border);border:1px solid var(--border);gap:1px;}
+.arch-card{
+  background:var(--panel);padding:36px 28px;transition:background 0.3s,transform 0.3s;
+  position:relative;overflow:hidden;
+}
+.arch-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  transform:scaleX(0);transition:transform 0.5s;
+}
+.arch-card:hover::before{transform:scaleX(1);}
+.arch-card:hover{background:var(--panel2);}
+.arch-card .icon{font-size:1.8rem;color:var(--accent);margin-bottom:20px;display:block;}
+.arch-card h3{font-family:var(--mono);font-size:0.75rem;color:var(--text-hi);margin-bottom:14px;letter-spacing:1.5px;}
+.arch-card p{font-size:0.82rem;color:var(--text-mid);line-height:1.7;}
+.arch-card code{background:var(--bg);color:var(--accent);padding:2px 6px;font-family:var(--mono);font-size:0.65rem;border-radius:2px;}
+.arch-card ul{margin-top:14px;list-style:none;}
+.arch-card li{padding:5px 0;border-bottom:1px solid var(--border);font-size:0.72rem;color:var(--text);display:flex;align-items:center;gap:8px;}
+.arch-card li i{font-size:0.6rem;color:var(--accent);width:12px;}
+
+.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+.feat-card{background:var(--panel);padding:32px 26px;transition:background 0.3s;}
+.feat-card:hover{background:var(--panel2);}
+.feat-card i{font-size:1.6rem;color:var(--accent);margin-bottom:18px;display:block;}
+.feat-card h4{font-family:var(--mono);font-size:0.75rem;color:var(--accent);margin-bottom:10px;letter-spacing:1px;}
+.feat-card p{font-size:0.8rem;color:var(--text-mid);line-height:1.7;}
+
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.gallery-item{background:var(--panel);border:1px solid var(--border);cursor:pointer;overflow:hidden;position:relative;border-radius:2px;transition:border 0.3s,transform 0.3s;}
+.gallery-item::after{content:'⊕';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:2rem;color:var(--accent);background:rgba(5,7,10,0.75);opacity:0;transition:opacity 0.3s;}
+.gallery-item:hover::after{opacity:1;}
+.gallery-item:hover{border-color:var(--accent);transform:translateY(-4px);}
+.gallery-item img{width:100%;height:148px;object-fit:cover;display:block;transition:transform 0.5s;filter:brightness(0.8);}
+.gallery-item:hover img{transform:scale(1.05);}
+.gallery-item figcaption{font-family:var(--mono);font-size:0.5rem;text-align:center;padding:9px;color:var(--text-mid);text-transform:uppercase;letter-spacing:2.5px;}
+
+.tools-section{
+  padding:110px 5%;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+}
+.tools-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));
+  gap:2px;
+  background:var(--border);
+  border:1px solid var(--border);
+}
+.tools-card{
+  background:var(--panel);
+  padding:36px 28px;
+  transition:all 0.3s;
+  border-bottom:2px solid transparent;
+}
+.tools-card:hover{
+  background:var(--panel2);
+  border-bottom-color:var(--accent);
+}
+.tools-card i{
+  font-size:2.2rem;
+  color:var(--accent);
+  margin-bottom:20px;
+  display:block;
+}
+.tools-card h3{
+  font-family:var(--mono);
+  font-size:1rem;
+  margin-bottom:12px;
+  color:var(--text-hi);
+  letter-spacing:1px;
+}
+.tools-card p{
+  font-size:0.85rem;
+  color:var(--text-mid);
+  margin-bottom:20px;
+  line-height:1.6;
+}
+
+.dl-section{
+  padding:110px 5%;max-width:100%;
+  background:var(--panel);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  position:relative;overflow:hidden;z-index:2;
+}
+.dl-glow-l{position:absolute;top:50%;left:-100px;transform:translateY(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(200,164,92,0.06) 0%,transparent 70%);pointer-events:none;}
+.dl-glow-r{position:absolute;top:50%;right:-100px;transform:translateY(-50%);width:400px;height:400px;background:radial-gradient(circle,rgba(74,140,255,0.04) 0%,transparent 70%);pointer-events:none;}
+.dl-inner{max-width:1200px;margin:0 auto;}
+.dl-header{text-align:center;margin-bottom:70px;}
+.dl-header .section-label{justify-content:center;display:block;text-align:center;}
+.dl-title{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:800;color:var(--text-hi);letter-spacing:-0.03em;margin-bottom:16px;line-height:1;}
+.dl-title em{color:var(--accent);font-style:normal;}
+.dl-subtitle{font-family:var(--mono);font-size:0.65rem;color:var(--text-mid);letter-spacing:4px;text-transform:uppercase;}
+.dl-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--border2);margin-bottom:50px;}
+.dl-card{
+  background:var(--bg2);padding:44px 36px;display:flex;flex-direction:column;align-items:flex-start;gap:0;
+  position:relative;overflow:hidden;text-decoration:none;color:inherit;
+  transition:background 0.3s;border:1px solid transparent;
+}
+.dl-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--accent-g) 0%,transparent 60%);
+  opacity:0;transition:opacity 0.4s;
+}
+.dl-card:hover{background:var(--panel);border-color:var(--accent);}
+.dl-card:hover::before{opacity:1;}
+.dl-card-os{display:flex;align-items:center;gap:16px;margin-bottom:24px;}
+.dl-card-os i{font-size:2.6rem;color:var(--accent);transition:transform 0.4s;}
+.dl-card:hover .dl-card-os i{transform:scale(1.08);}
+.dl-card-os-name{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--text-hi);letter-spacing:1.5px;}
+.dl-card-os-ver{font-family:var(--mono);font-size:0.55rem;color:var(--text-mid);letter-spacing:1.5px;margin-top:2px;}
+.dl-card-desc{font-size:0.82rem;color:var(--text-mid);line-height:1.7;margin-bottom:auto;flex-grow:1;padding-bottom:28px;}
+.dl-card-meta{width:100%;border-top:1px solid var(--border2);padding-top:20px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:auto;}
+.dl-card-format{font-family:var(--mono);font-size:0.55rem;color:var(--accent);letter-spacing:2.5px;text-transform:uppercase;}
+.dl-btn{
+  background:var(--accent);color:#0b0e1a;padding:10px 22px;
+  font-family:var(--mono);font-size:0.55rem;font-weight:700;letter-spacing:2.5px;
+  text-transform:uppercase;text-decoration:none;display:inline-flex;align-items:center;gap:7px;
+  transition:all 0.3s;white-space:nowrap;border:1px solid var(--accent);border-radius:2px;
+}
+.dl-btn:hover{background:transparent;color:var(--accent);box-shadow:0 0 30px var(--accent-gb);}
+.dl-card-win .dl-card-os i{color:#4a8cff;}
+.dl-card-win .dl-card-format,.dl-card-win .dl-btn{border-color:#4a8cff;background:#4a8cff;color:#0b0e1a;}
+.dl-card-win .dl-btn:hover{background:transparent;color:#4a8cff;box-shadow:0 0 30px rgba(74,140,255,0.2);}
+.dl-card-win .dl-card-os-name{color:#4a8cff;}
+.dl-card-mac .dl-card-os i{color:#e8e8e8;}
+.dl-card-mac .dl-card-format,.dl-card-mac .dl-btn{border-color:#e8e8e8;background:#e8e8e8;color:#0b0e1a;}
+.dl-card-mac .dl-btn:hover{background:transparent;color:#e8e8e8;box-shadow:0 0 30px rgba(232,232,232,0.15);}
+.dl-card-mac .dl-card-os-name{color:#e8e8e8;}
+.dl-card-linux .dl-card-os i{color:#f0b34b;}
+.dl-card-linux .dl-card-format,.dl-card-linux .dl-btn{border-color:#f0b34b;background:#f0b34b;color:#0b0e1a;}
+.dl-card-linux .dl-btn:hover{background:transparent;color:#f0b34b;box-shadow:0 0 30px rgba(240,179,75,0.2);}
+.dl-card-linux .dl-card-os-name{color:#f0b34b;}
+.dl-bottom{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;
+  padding:28px 32px;background:var(--bg);border:1px solid var(--border);border-radius:2px;
+}
+.dl-bottom-left{display:flex;gap:16px;flex-wrap:wrap;}
+.dl-bottom-right{font-family:var(--mono);font-size:0.55rem;color:var(--text-mid);text-align:right;line-height:2.2;}
+.dl-bottom-right span{color:var(--accent);}
+
+.pdf-wrap{background:var(--panel);border:1px solid var(--border);padding:20px;margin-top:30px;border-radius:2px;}
+.pdf-embed{width:100%;height:780px;border:none;background:#0a0e16;border-radius:2px;}
+
+.trust-section{
+  padding:80px 5%;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg,var(--accent-g) 0%,transparent 100%);
+  position:relative;z-index:2;
+}
+.trust-inner{max-width:1200px;margin:0 auto;}
+.slider-container{width:100%;overflow:hidden;padding:2rem 0;mask-image:linear-gradient(to right,transparent,black 12%,black 88%,transparent);}
+.slider-track{display:flex;animation:marquee 28s linear infinite;width:max-content;gap:5rem;}
+.slider-container:hover .slider-track{animation-play-state:paused;}
+.slide{display:flex;align-items:center;justify-content:center;}
+.partner-logo{height:42px;width:auto;filter:grayscale(100%) brightness(0.7);opacity:0.35;transition:all 0.5s;cursor:help;}
+.slide:hover .partner-logo{filter:grayscale(0%) brightness(1);opacity:1;transform:scale(1.08);}
+@keyframes marquee{0%{transform:translateX(0);}100%{transform:translateX(calc(-50% - 2.5rem));}}
+.legal-note{margin-top:3rem;text-align:center;font-family:var(--mono);font-size:0.55rem;color:var(--text-mid);line-height:2.2;}
+
+.faq-wrap{
+  padding:110px 5%;max-width:900px;margin:0 auto;
+  background:var(--bg2);position:relative;z-index:2;
+}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-q{
+  padding:22px 0;cursor:pointer;font-family:var(--mono);
+  display:flex;justify-content:space-between;align-items:center;
+  color:var(--text-hi);font-size:0.75rem;letter-spacing:0.5px;
+  transition:color 0.3s;gap:20px;
+}
+.faq-q:hover{color:var(--accent);}
+.faq-q .num{color:var(--text-mid);margin-right:10px;}
+.faq-q i{font-size:0.7rem;color:var(--text-mid);flex-shrink:0;transition:transform 0.3s;}
+.faq-item.open .faq-q{color:var(--accent);}
+.faq-item.open .faq-q i{transform:rotate(180deg);}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.4s;color:var(--text-mid);font-size:0.83rem;line-height:1.85;padding-left:24px;}
+.faq-item.open .faq-a{max-height:400px;padding-bottom:22px;}
+
+/* ----- Webapp Section ----- */
+.webapp-section{
+  padding:110px 5%;max-width:1300px;margin:0 auto;
+  position:relative;z-index:2;
+}
+.webapp-tabs{
+  display:flex;gap:2px;flex-wrap:wrap;
+  background:var(--border);border:1px solid var(--border);
+  margin-bottom:30px;
+}
+.webapp-tab{
+  padding:12px 22px;font-family:var(--mono);font-size:0.55rem;
+  letter-spacing:2.5px;text-transform:uppercase;color:var(--text-mid);
+  background:var(--panel);cursor:pointer;transition:all 0.3s;
+  border:none;border-bottom:2px solid transparent;
+}
+.webapp-tab:hover{color:var(--text);background:var(--panel2);}
+.webapp-tab.active{color:var(--accent);background:var(--bg2);border-bottom-color:var(--accent);}
+.webapp-content{display:none;}
+.webapp-content.active{display:block;}
+.wa-card{
+  background:var(--panel);border:1px solid var(--border);padding:32px;
+  margin-bottom:2px;
+}
+.wa-card h2{font-family:var(--mono);font-size:0.85rem;color:var(--accent);margin-bottom:18px;letter-spacing:1.5px;}
+.wa-card p{font-size:0.85rem;color:var(--text-mid);margin-bottom:20px;line-height:1.7;}
+.wa-card label{display:block;font-size:0.7rem;color:var(--text-mid);margin-bottom:6px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;}
+.wa-card input,.wa-card textarea,.wa-card select{
+  width:100%;padding:12px 14px;background:var(--bg2);border:1px solid var(--border2);border-radius:2px;
+  color:var(--text);font-size:0.85rem;margin-bottom:14px;transition:border-color 0.2s;font-family:var(--sans);
+}
+.wa-card input:focus,.wa-card textarea:focus,.wa-card select:focus{outline:none;border-color:var(--accent);}
+.wa-card textarea{font-family:var(--mono);min-height:100px;resize:vertical;font-size:0.75rem;}
+.wa-card select{cursor:pointer;}
+.wa-card .row{display:flex;gap:14px;align-items:flex-end;}
+.wa-card .row>*{flex:1;}
+.wa-card .row.gap-sm{gap:8px;}
+.wa-card .flex-center{display:flex;align-items:center;gap:8px;}
+.wa-card input[type="checkbox"]{width:auto;margin:0;padding:0;}
+.wa-card .checkbox-label{display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text-mid);font-size:0.8rem;padding-top:4px;}
+.wa-card .checkbox-label input[type="checkbox"]{width:16px;height:16px;accent-color:var(--accent);}
+.wa-output{
+  background:var(--bg);border:1px solid var(--border);padding:16px;
+  margin-top:14px;font-family:var(--mono);font-size:0.7rem;
+  white-space:pre-wrap;word-wrap:break-word;max-height:300px;overflow-y:auto;
+  color:var(--text-mid);display:none;line-height:1.6;
+}
+.wa-output.show{display:block;}
+.wa-output.success{border-color:var(--accent);color:var(--text);}
+.wa-output.error{border-color:var(--red);color:var(--red);}
+.file-drop{
+  border:2px dashed var(--border2);padding:28px;text-align:center;
+  color:var(--text-mid);cursor:pointer;transition:all 0.2s;margin-bottom:14px;
+  font-family:var(--sans);font-size:0.8rem;
+}
+.file-drop:hover,.file-drop.dragover{border-color:var(--accent);color:var(--accent);background:var(--accent-g);}
+.file-drop.has-file{border-color:var(--accent);background:var(--accent-g);}
+.file-drop .filename{color:var(--accent);font-size:0.8rem;margin-top:6px;font-family:var(--mono);}
+.wa-card .text-muted{color:var(--text-mid);font-size:0.8rem;}
+.wa-card table{width:100%;border-collapse:collapse;font-size:0.75rem;}
+.wa-card th,.wa-card td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);color:var(--text-mid);}
+.wa-card th{color:var(--text-mid);font-family:var(--mono);font-size:0.6rem;letter-spacing:2px;text-transform:uppercase;}
+.wa-card tr:hover td{background:var(--bg2);}
+.wa-card .status-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;font-size:0.85rem;}
+.wa-card .status-dot{width:10px;height:10px;border-radius:50%;background:var(--red);}
+.wa-card .status-dot.online{background:#28c840;}
+.wa-card .status-dot.offline{background:var(--red);}
+
+/* Footer */
+footer{
+  background:var(--bg);border-top:1px solid var(--border);
+  padding:52px 5%;position:relative;z-index:2;
+}
+.footer-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px;margin-bottom:40px;}
+.footer-links{display:flex;gap:24px;flex-wrap:wrap;}
+.footer-links a{font-family:var(--mono);font-size:0.58rem;color:var(--text-mid);text-decoration:none;letter-spacing:2.5px;text-transform:uppercase;transition:color 0.3s;}
+.footer-links a:hover{color:var(--accent);}
+.footer-tech{
+  font-family:var(--mono);font-size:0.5rem;color:var(--text-mid);letter-spacing:3px;
+  text-align:center;border-top:1px solid var(--border);padding-top:28px;line-height:2.5;text-transform:uppercase;
+}
+
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.8s cubic-bezier(0.2,0.9,0.3,1),transform 0.8s cubic-bezier(0.2,0.9,0.3,1);}
+.reveal.on{opacity:1;transform:translateY(0);}
+
+.lightbox{display:none;position:fixed;inset:0;background:rgba(5,7,10,0.98);z-index:2000;justify-content:center;align-items:center;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:90%;max-height:88%;border:1px solid var(--accent);border-radius:2px;}
+.lb-close{position:absolute;top:22px;right:30px;color:#fff;font-size:2.2rem;cursor:pointer;font-family:var(--mono);}
+
+.toast{
+  position:fixed;bottom:2rem;right:2rem;background:var(--panel);border:1px solid var(--border2);padding:14px 22px;
+  color:var(--text);font-size:0.8rem;z-index:9999;opacity:0;transform:translateY(20px);transition:all 0.3s;pointer-events:none;
+  font-family:var(--mono);
+}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{border-color:var(--accent);}
+.toast.error{border-color:var(--red);}
+
+.hidden{display:none!important;}
+
+@media(max-width:1024px){.arch-grid{grid-template-columns:repeat(2,1fr);}.feat-grid{grid-template-columns:repeat(2,1fr);}.dl-cards{grid-template-columns:1fr;gap:4px;}.statsbar-grid{grid-template-columns:repeat(2,1fr);gap:24px;}.gallery-grid{grid-template-columns:repeat(3,1fr);}.webapp-tabs{overflow-x:auto;}}
+@media(max-width:768px){nav{display:none;}.hero h1{font-size:2.5rem;}.arch-grid{grid-template-columns:1fr;}.feat-grid{grid-template-columns:1fr;}.gallery-grid{grid-template-columns:repeat(2,1fr);}.dl-bottom{flex-direction:column;text-align:center;}.dl-bottom-right{text-align:center;}.footer-top{flex-direction:column;align-items:flex-start;}.wa-card .row{flex-direction:column;}}
 </style>
 </head>
 <body>
+<div class="grid-bg"></div>
 
-<div class="container">
-  <header>
-    <div class="logo">AVGVSTO <span>USB</span></div>
-    <div class="header-right">
-      <div class="status"><span class="dot offline" id="statusDot"></span><span id="statusText">offline</span></div>
-      <div class="user-badge" id="userBadge"><span id="userName"></span><span class="role" id="userRole"></span><button class="logout-btn" onclick="logout()">esci</button></div>
-    </div>
-  </header>
-
-  <nav id="nav">
-    <a class="active" data-page="encrypt">Crittografa</a>
-    <a data-page="decrypt">Decrittografa</a>
-    <a data-page="verify">Verifica</a>
-    <a data-page="files">File</a>
-    <a data-page="keys">Chiavi USB</a>
-    <a data-page="auth">Account</a>
-    <a data-page="docs">API</a>
+<header id="hdr">
+  <a href="#" class="logo">
+    <img src="https://i.ibb.co/dsB0tnQ3/avl.png" alt="AVGVSTO">
+    <span class="logo-badge">OPEN SOURCE</span>
+  </a>
+  <nav>
+    <a href="#architecture">Architettura</a>
+    <a href="#features">Funzionalità</a>
+    <a href="#gallery">Interfaccia</a>
+    <a href="#whitepaper">Whitepaper</a>
+    <a href="#tools">Tools</a>
+    <a href="#webapp" class="nav-webapp"><i class="fas fa-globe"></i> Web App</a>
+    <a href="#faq">FAQ</a>
+    <a href="https://github.com/RoyMerlo/AVGVSTO-USB" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
+    <a href="#download" class="nav-dl"><i class="fas fa-download"></i> Download</a>
   </nav>
+</header>
 
-  <!-- PAGE: Encrypt -->
-  <div class="page active" id="page-encrypt">
-    <div class="card">
-      <h2>Crittografa testo</h2>
-      <p>Inserisci il testo da crittografare con AES-256-GCM o ChaCha20-Poly1305.</p>
-      <textarea id="encryptInput" placeholder="Testo segreto..."></textarea>
-      <div class="row">
-        <div style="flex:1">
-          <label>Cifrario</label>
-          <select id="encryptCipher"><option value="aes-256-gcm">AES-256-GCM</option><option value="chacha20-poly1305">ChaCha20-Poly1305</option></select>
-        </div>
-        <div style="flex:1">
-          <label>Passphrase</label>
-          <input type="password" id="encryptPassphrase" placeholder="Auto-generata se vuota">
-        </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-inner">
+    <div class="hero-label"><span class="bar"></span> FULLY OPEN SOURCE · GPLv3 · HARDWARE-BOUND</div>
+    <h1>
+      <span class="glitch" data-text="HARDWARE-BOUND">HARDWARE-BOUND</span><br>
+      <span class="hl">FILE ENCRYPTION</span><br>
+      <span class="dim">OPEN SOURCE.</span>
+    </h1>
+    <p class="hero-desc">
+      AVGVSTO fuses your password with the physical fingerprint of any USB drive.
+      Without the exact hardware, decryption is <strong>impossible</strong> — even with the correct password.
+      Anti‑bruteforce. Duress mode. Cascade ciphers. Zero telemetry. Zero cloud.
+    </p>
+    <div class="hero-actions">
+      <a href="#download" class="btn btn-primary"><i class="fas fa-download"></i> Download Free</a>
+      <a href="https://github.com/RoyMerlo/AVGVSTO-USB" class="btn btn-outline" target="_blank" rel="noopener"><i class="fab fa-github"></i> Source Code</a>
+      <a href="https://github.com/RoyMerlo" class="btn btn-ghost" target="_blank" rel="noopener"><i class="fas fa-user-astronaut"></i> Roy</a>
+      <a href="https://github.com/Rp-ics" class="btn btn-ghost" target="_blank" rel="noopener"><i class="fas fa-user-astronaut"></i> RPX</a>
+    </div>
+    <div class="hero-terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <span class="terminal-label">AVGVSTO v3.1.3 — AES-256-GCM · ChaCha20 · CASCADE</span>
       </div>
-      <div class="row">
-        <div style="flex:1">
-          <label>Percorso chiave USB</label>
-          <input type="text" id="encryptUsbPath" placeholder="Es. E:\ (opzionale)">
-        </div>
-        <div style="flex:0;padding-top:1.5rem">
-          <label class="flex flex-center" style="cursor:pointer;color:#888;font-size:0.85rem"><input type="checkbox" id="encryptDuress" style="width:auto;margin:0"> Duress</label>
-        </div>
+      <div class="terminal-body">
+        <div><span class="t-dim">$</span> <span class="t-acc">avgvsto</span> encrypt <span class="t-gold">./classified_docs/</span> --usb /dev/sdb1</div>
+        <div><span class="t-dim">  [✓] USB Hardware Fingerprint verified — ID: 3a8f2c...</span></div>
+        <div><span class="t-dim">  [✓] PBKDF2 key derivation — 1,000,000 iterations</span></div>
+        <div><span class="t-acc">  [✓] AES-256-GCM → ChaCha20-Poly1305 cascade applied</span></div>
+        <div><span class="t-dim">  [✓] 47 file(s) encrypted. Originals shredded (3-pass DoD).</span></div>
+        <div><span class="t-acc">  [✓] Audit log entry signed and appended.</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-dim">$</span> <span class="cursor"></span></div>
       </div>
-      <button class="btn" onclick="encrypt()">Crittografa</button>
-      <div class="output" id="encryptOutput"></div>
     </div>
   </div>
+</section>
 
-  <!-- PAGE: Decrypt -->
-  <div class="page" id="page-decrypt">
-    <div class="card">
-      <h2>Decrittografa</h2>
-      <p>Incolla i dati crittografati (base64) e la passphrase per decrittografarli.</p>
-      <textarea id="decryptInput" placeholder="Dati crittografati in base64..."></textarea>
-      <input type="password" id="decryptPassphrase" placeholder="Passphrase">
-      <input type="text" id="decryptUsbPath" placeholder="Percorso chiave USB (opzionale)">
-      <button class="btn" onclick="decrypt()">Decrittografa</button>
-      <div class="output" id="decryptOutput"></div>
+<!-- STATS -->
+<div class="statsbar">
+  <div class="statsbar-grid">
+    <div class="stat-item"><span class="stat-val" data-target="1000000">0</span><span class="stat-lbl">PBKDF2 Iterations</span></div>
+    <div class="stat-item"><span class="stat-val">256/512</span><span class="stat-lbl">Effective Key Bits</span></div>
+    <div class="stat-item"><span class="stat-val">100%</span><span class="stat-lbl">Open Source · Auditable</span></div>
+    <div class="stat-item"><span class="stat-val">3</span><span class="stat-lbl">Platforms: Win / Mac / Linux</span></div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE -->
+<section id="architecture" class="section">
+  <span class="section-label reveal">CRYPTO CORE</span>
+  <h2 class="section-title reveal">Radical transparency,<br><em class="glitch" data-text="military‑grade security" style="font-style:normal;color:var(--accent);">military‑grade security</em></h2>
+  <p class="section-sub reveal">Every cryptographic decision is visible, auditable, and reproducible. No black boxes.</p>
+  <div class="arch-grid reveal">
+    <div class="arch-card"><span class="icon"><i class="fas fa-microchip"></i></span><h3>USB HARDWARE FINGERPRINT</h3><p><code>serial + volumeID</code> merged into key via PBKDF2. Any USB works, cloning fails.</p><ul><li><i class="fas fa-lock"></i> 128-bit hardware salt</li><li><i class="fas fa-ban"></i> Clone / emulation resistant</li></ul></div>
+    <div class="arch-card"><span class="icon"><i class="fas fa-cogs"></i></span><h3>AES-256-GCM / CHACHA20</h3><p>Authenticated encryption, indistinguishable from random. Choose your cipher or cascade both.</p><ul><li><i class="fas fa-check"></i> AES-NI + AVX2 acceleration</li><li><i class="fas fa-check"></i> Poly1305 MAC authentication</li></ul></div>
+    <div class="arch-card"><span class="icon"><i class="fas fa-hourglass-end"></i></span><h3>ANTI‑BRUTEFORCE ENGINE</h3><p>Exponential backoff up to 1 month. Hardware‑bound lockout, no reset bypass.</p><ul><li><i class="fas fa-skull"></i> Progressive delay: 5s → 1 month</li><li><i class="fas fa-shield"></i> Persistent across restarts</li></ul></div>
+    <div class="arch-card"><span class="icon"><i class="fas fa-mask"></i></span><h3>PLAUSIBLE DENIABILITY</h3><p>Duress password reveals a decoy. Real data is mathematically hidden in the same container.</p><ul><li><i class="fas fa-user-secret"></i> Two independent key trees</li><li><i class="fas fa-ghost"></i> Forensically indistinguishable</li></ul></div>
+    <div class="arch-card"><span class="icon"><i class="fas fa-layer-group"></i></span><h3>CASCADE ENCRYPTION</h3><p>AES‑256 → ChaCha20 with independent keys. Future-proof double-layer defense.</p><ul><li><i class="fas fa-shield"></i> 512‑bit effective strength</li><li><i class="fas fa-flask"></i> Post‑quantum resilient design</li></ul></div>
+    <div class="arch-card"><span class="icon"><i class="fas fa-scroll"></i></span><h3>TAMPER‑PROOF AUDIT</h3><p>Immutable signed logs of every access event. HMAC-SHA256 per entry. No deletion possible.</p><ul><li><i class="fas fa-signature"></i> Forensic integrity chain</li><li><i class="fas fa-history"></i> Business: full audit trail</li></ul></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" class="section" style="background:var(--bg2);max-width:100%;padding:110px 5%;">
+  <div style="max-width:1300px;margin:0 auto;">
+    <span class="section-label reveal">WHAT YOU GET</span>
+    <h2 class="section-title reveal">Everything included.<br>Forever free &amp; open.</h2>
+    <p class="section-sub reveal">No paywalls. No feature gates. No artificial tiers. Full cryptographic power in your hands.</p>
+    <div class="feat-grid reveal">
+      <div class="feat-card"><i class="fas fa-infinity"></i><h4>No artificial limits</h4><p>Unlimited files, unlimited batches, unlimited users. The full suite is yours.</p></div>
+      <div class="feat-card"><i class="fas fa-terminal"></i><h4>CLI + GUI duality</h4><p>Full command-line automation for power users; polished GUI for everyone else.</p></div>
+      <div class="feat-card"><i class="fas fa-usb"></i><h4>Portable mode</h4><p>Run directly from any USB stick. Zero installation, ideal for air-gapped systems.</p></div>
+      <div class="feat-card"><i class="fas fa-code-branch"></i><h4>Fully auditable source</h4><p>Every primitive visible. Build deterministically. Verify with confidence. Fork freely.</p></div>
+      <div class="feat-card"><i class="fas fa-shield-virus"></i><h4>Secure deletion</h4><p>3-pass DoD-compliant shredding of temp files and original plaintext after encryption.</p></div>
+      <div class="feat-card"><i class="fas fa-globe-slash"></i><h4>100% offline operation</h4><p>No cloud, no telemetry, no activation servers. Your data never leaves your hardware.</p></div>
     </div>
   </div>
+</section>
 
-  <!-- PAGE: Verify -->
-  <div class="page" id="page-verify">
-    <div class="card">
-      <h2>Verifica formato</h2>
-      <p>Controlla se i dati sono in formato AVGVSTO valido.</p>
-      <textarea id="verifyInput" placeholder="Dati crittografati in base64..."></textarea>
-      <button class="btn" onclick="verify()">Verifica</button>
-      <div class="output" id="verifyOutput"></div>
-    </div>
+<!-- GALLERY -->
+<section id="gallery" class="section">
+  <span class="section-label reveal">INTERFACE · NO BLOAT</span>
+  <h2 class="section-title reveal">Minimal. Direct. Effective.</h2>
+  <p class="section-sub reveal">Click any screenshot to inspect the interface in full detail.</p>
+  <div class="gallery-grid reveal">
+    <figure class="gallery-item"><img src="https://i.ibb.co/PzMxL2Zk/Screenshot-2026-03-12-152401.png" alt="main dashboard" loading="lazy"><figcaption>Main Dashboard</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/rKJwFLgL/Screenshot-2026-03-11-122340.png" alt="simple mode" loading="lazy"><figcaption>Simple mode</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/XrpzVFKh/Screenshot-2026-03-12-111029.png" alt="usb analysis" loading="lazy"><figcaption>USB Analyzer</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/MDpRKZQm/Screenshot-2026-03-12-182156.png" alt="attempt limits" loading="lazy"><figcaption>Attempt Limits</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/q3F9WqXH/Screenshot-2026-03-12-175731.png" alt="encrypt view" loading="lazy"><figcaption>Encryption View</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/Bbjtt0f/Screenshot-2026-03-12-180232.png" alt="progress" loading="lazy"><figcaption>Progress</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/s9wT2jyK/Screenshot-2026-03-12-180408.png" alt="bruteforce lockout" loading="lazy"><figcaption>Bruteforce Lockout</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/tPkbxbQw/Screenshot-2026-03-12-181129.png" alt="integrity analyzer" loading="lazy"><figcaption>Integrity Analyzer</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/3yTRtbYK/Screenshot-2026-03-12-181612.png" alt="action selection" loading="lazy"><figcaption>Action Selection</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/jP3Ld5ms/Screenshot-2026-03-12-181717.png" alt="duress ui" loading="lazy"><figcaption>Duress UI</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/1tLN28P0/Screenshot-2026-03-12-181447.png" alt="usb cleaner" loading="lazy"><figcaption>USB Cleaner</figcaption></figure>
+    <figure class="gallery-item"><img src="https://i.ibb.co/Tx03CZnG/Screenshot-2026-03-12-181409.png" alt="built-in help" loading="lazy"><figcaption>Built‑in Help</figcaption></figure>
   </div>
+</section>
 
-  <!-- PAGE: Files -->
-  <div class="page" id="page-files">
-    <div class="card">
-      <h2>Crittografa file</h2>
-      <p>Carica un file da crittografare. Riceverai il file .avgvsto in base64.</p>
-      <div class="file-drop" id="encryptFileDrop" onclick="document.getElementById('encryptFile').click()">
-        <div id="encryptFileLabel">Trascina un file qui o clicca per selezionare</div>
-        <div class="filename hidden" id="encryptFileName"></div>
+<!-- TOOLS -->
+<section id="tools" class="tools-section">
+  <div style="max-width:1300px;margin:0 auto;">
+    <span class="section-label reveal">TOOLS ECOSYSTEM</span>
+    <h2 class="section-title reveal">Essential utilities<br><span style="color:var(--accent);">built for privacy &amp; speed</span></h2>
+    <div class="tools-grid reveal">
+      <div class="tools-card">
+        <i class="fas fa-qrcode"></i>
+        <h3>QR Code Studio</h3>
+        <p>Transform any text, link, or data into a scannable QR code. Choose permanent or temporary codes with custom lifespan. Download as high-res PNG.</p>
+        <a href="QRGen/index.html" class="btn btn-primary" style="padding:10px 24px;font-size:0.65rem;" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Launch QR Generator →</a>
       </div>
-      <input type="file" id="encryptFile" class="hidden" onchange="handleFileSelect('encryptFile','encryptFileLabel','encryptFileName')">
-      <div class="row">
-        <div style="flex:1">
-          <label>Cifrario</label>
-          <select id="encryptFileCipher"><option value="aes-256-gcm">AES-256-GCM</option><option value="chacha20-poly1305">ChaCha20-Poly1305</option></select>
+      <div class="tools-card">
+        <i class="fas fa-comments"></i>
+        <h3>Temporary Chat</h3>
+        <p>Ephemeral, self-destructing messages. No logs, no tracking. Create a room, share the link, and chat privately. Messages disappear after being read.</p>
+        <a href="TempChat/index.html" class="btn btn-primary" style="padding:10px 24px;font-size:0.65rem;" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Launch Temp Chat →</a>
+      </div>
+      <div class="tools-card" style="opacity:0.85;">
+        <i class="fas fa-file-contract"></i>
+        <h3>Integrity Verifier</h3>
+        <p>SHA-3 & HMAC checksums for any file. Verify file integrity with cryptographic hashing.</p>
+        <button class="btn btn-ghost" disabled>Coming soon</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHITEPAPER -->
+<section id="whitepaper" class="section" style="background:var(--bg2);max-width:100%;padding:110px 5%;">
+  <div style="max-width:1300px;margin:0 auto;">
+    <span class="section-label reveal">FULL TECHNICAL ARCHITECTURE</span>
+    <h2 class="section-title reveal">AVGVSTO 3.1.3 — Official Cryptography Whitepaper</h2>
+    <div class="reveal pdf-wrap">
+      <embed class="pdf-embed" src="files/avgv.pdf" type="application/pdf">
+      <div style="margin-top:18px;text-align:right;font-family:var(--mono);font-size:0.6rem;">
+        <a href="files/avgv.pdf" download style="color:var(--accent);text-decoration:underline;">📄 Download PDF</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/RoyMerlo/AVGVSTO-USB/tree/main/docs" target="_blank" rel="noopener" style="color:var(--accent);">📖 Read on GitHub</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DOWNLOAD -->
+<div class="dl-section" id="download">
+  <div class="dl-glow-l"></div>
+  <div class="dl-glow-r"></div>
+  <div class="dl-inner">
+    <div class="dl-header reveal">
+      <span class="section-label">GET AVGVSTO FREE</span>
+      <h2 class="dl-title">Download for your<br><em>platform.</em></h2>
+      <p class="dl-subtitle">Pre-compiled · GPLv3 · No registration · No telemetry</p>
+    </div>
+    <div class="dl-cards reveal">
+      <a href="https://www.avgvstousb.com/AVGVSTO_WINDOWS_Setup.zip" class="dl-card dl-card-win" download>
+        <div class="dl-card-os">
+          <i class="fab fa-windows"></i>
+          <div>
+            <div class="dl-card-os-name">WINDOWS</div>
+            <div class="dl-card-os-ver">Windows 10 / 11 · x64</div>
+          </div>
         </div>
-        <div style="flex:1">
-          <label>Passphrase</label>
-          <input type="password" id="encryptFilePassphrase" placeholder="Auto-generata se vuota">
+        <p class="dl-card-desc">Native executable. No installation required — run directly or deploy as portable from USB. Includes GUI + CLI.</p>
+        <div class="dl-card-meta">
+          <span class="dl-card-format">.ZIP · .EXE</span>
+          <span class="dl-btn"><i class="fas fa-download"></i> Download</span>
         </div>
+      </a>
+      <a href="https://www.avgvstousb.com/AVGVSTOUSBMacOS.zip" class="dl-card dl-card-mac" download>
+        <div class="dl-card-os">
+          <i class="fab fa-apple"></i>
+          <div>
+            <div class="dl-card-os-name">macOS</div>
+            <div class="dl-card-os-ver">macOS 12 Monterey+ · ARM/Intel</div>
+          </div>
+        </div>
+        <p class="dl-card-desc">Universal binary — runs on both Apple Silicon and Intel Macs. Full feature parity. Native dark mode.</p>
+        <div class="dl-card-meta">
+          <span class="dl-card-format">.ZIP · .APP</span>
+          <span class="dl-btn"><i class="fas fa-download"></i> Download</span>
+        </div>
+      </a>
+      <a href="https://www.avgvstousb.com/AVGVSTO-3.1.3-x86_64.AppImage" class="dl-card dl-card-linux" download>
+        <div class="dl-card-os">
+          <i class="fab fa-linux"></i>
+          <div>
+            <div class="dl-card-os-name">LINUX</div>
+            <div class="dl-card-os-ver">Ubuntu 20.04+ · Debian · Arch</div>
+          </div>
+        </div>
+        <p class="dl-card-desc">AppImage — runs on any modern distro without installation. Full CLI available for headless deployments.</p>
+        <div class="dl-card-meta">
+          <span class="dl-card-format">.ZIP · .PY</span>
+          <span class="dl-btn"><i class="fas fa-download"></i> Download</span>
+        </div>
+      </a>
+    </div>
+    <div class="dl-bottom reveal">
+      <div class="dl-bottom-left">
+        <a href="https://github.com/RoyMerlo/AVGVSTO-USB/releases" class="btn btn-outline" target="_blank" rel="noopener" style="padding:10px 22px;font-size:0.6rem;">
+          <i class="fab fa-github"></i> Latest Release on GitHub
+        </a>
+        <a href="https://github.com/RoyMerlo/AVGVSTO-USB" class="btn btn-ghost" target="_blank" rel="noopener" style="padding:10px 22px;font-size:0.6rem;">
+          <i class="fas fa-code"></i> Build from Source
+        </a>
       </div>
-      <button class="btn" onclick="encryptFile()">Crittografa file</button>
-      <div class="output" id="encryptFileOutput"></div>
-    </div>
-
-    <div class="card">
-      <h2>Decrittografa file</h2>
-      <p>Carica un file .avgvsto crittografato.</p>
-      <div class="file-drop" id="decryptFileDrop" onclick="document.getElementById('decryptFile').click()">
-        <div id="decryptFileLabel">Trascina un file .avgvsto qui</div>
-        <div class="filename hidden" id="decryptFileName"></div>
+      <div class="dl-bottom-right">
+        <span>GPLv3 License</span> — inspect, fork, modify, distribute freely<br>
+        SHA256 &amp; signatures available in the GitHub repository<br>
+        <span>100% offline</span> · No telemetry · No accounts required
       </div>
-      <input type="file" id="decryptFile" class="hidden" onchange="handleFileSelect('decryptFile','decryptFileLabel','decryptFileName')">
-      <input type="password" id="decryptFilePassphrase" placeholder="Passphrase">
-      <button class="btn" onclick="decryptFile()">Decrittografa file</button>
-      <div class="output" id="decryptFileOutput"></div>
-    </div>
-  </div>
-
-  <!-- PAGE: Keys -->
-  <div class="page" id="page-keys">
-    <div class="card">
-      <h2>Associa chiave USB</h2>
-      <p>Inserisci il percorso della tua chiave USB per associarla al tuo account.</p>
-      <input type="text" id="bindUsbPath" placeholder="Es. E:\">
-      <button class="btn" onclick="bindUsb()">Associa</button>
-      <div class="output" id="bindUsbOutput"></div>
-    </div>
-    <div class="card">
-      <h2>Chiavi associate</h2>
-      <div id="keysList"><p class="text-muted">Nessuna chiave associata.</p></div>
-      <button class="btn btn-outline mt-1" onclick="listKeys()">Aggiorna lista</button>
-    </div>
-  </div>
-
-  <!-- PAGE: Auth -->
-  <div class="page" id="page-auth">
-    <div class="card" id="registerCard">
-      <h2>Registrati</h2>
-      <p>Crea un account per usare le API di crittografia.</p>
-      <input type="text" id="regUsername" placeholder="Username (3-64 caratteri)">
-      <input type="password" id="regPassword" placeholder="Password (min 8 caratteri)">
-      <button class="btn" onclick="register()">Registrati</button>
-      <div class="output" id="regOutput"></div>
-    </div>
-    <div class="card" id="loginCard">
-      <h2>Login</h2>
-      <input type="text" id="loginUsername" placeholder="Username">
-      <input type="password" id="loginPassword" placeholder="Password">
-      <button class="btn" onclick="login()">Accedi</button>
-      <div class="output" id="loginOutput"></div>
-    </div>
-    <div class="card" id="profileCard" style="display:none">
-      <h2>Profilo</h2>
-      <p>Benvenuto <strong id="profileName" class="text-green"></strong> (ruolo: <span id="profileRole"></span>)</p>
-      <p class="text-muted">Sei autenticato. Ora puoi usare tutte le funzioni di crittografia.</p>
-    </div>
-  </div>
-
-  <!-- PAGE: Docs -->
-  <div class="page" id="page-docs">
-    <div class="card">
-      <h2>API Reference</h2>
-      <p>Specifica OpenAPI disponibile su <code style="color:#00ff88"><span id="apiBaseUrl"></span>/api/v1/openapi.json</code></p>
-      <table>
-        <tr><th>Metodo</th><th>Endpoint</th><th>Descrizione</th></tr>
-        <tr><td>POST</td><td>/api/v1/register</td><td>Crea account</td></tr>
-        <tr><td>POST</td><td>/api/v1/login</td><td>Ottieni JWT</td></tr>
-        <tr><td>POST</td><td>/api/v1/refresh</td><td>Rinnova token</td></tr>
-        <tr><td>POST</td><td>/api/v1/encrypt</td><td>Crittografa testo</td></tr>
-        <tr><td>POST</td><td>/api/v1/decrypt</td><td>Decrittografa</td></tr>
-        <tr><td>POST</td><td>/api/v1/verify</td><td>Verifica formato</td></tr>
-        <tr><td>POST</td><td>/api/v1/encrypt-file</td><td>Crittografa file</td></tr>
-        <tr><td>POST</td><td>/api/v1/decrypt-file</td><td>Decrittografa file</td></tr>
-        <tr><td>POST</td><td>/api/v1/keys/bind-usb</td><td>Associa chiave USB</td></tr>
-        <tr><td>GET</td><td>/api/v1/keys</td><td>Chiavi associate</td></tr>
-        <tr><td>GET</td><td>/api/v1/audit-log</td><td>Log audit (admin)</td></tr>
-        <tr><td>GET</td><td>/api/v1/health</td><td>Stato server</td></tr>
-        <tr><td>GET</td><td>/api/v1/openapi.json</td><td>Specifica OpenAPI</td></tr>
-      </table>
     </div>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- TRUST -->
+<section class="trust-section">
+  <div class="trust-inner">
+    <span class="section-label reveal" style="text-align:center;display:block;">COMMUNITY &amp; TECHNOLOGY</span>
+    <h2 class="section-title reveal" style="text-align:center;margin-bottom:1rem;">Built with open tools,<br>trusted by the community</h2>
+    <div class="slider-container reveal">
+      <div class="slider-track">
+        <div class="slide" data-tooltip="In collaboration with GDSchool"><img src="https://i.ibb.co/SXnqwrNK/GDSL.png" alt="GDSchool" class="partner-logo"></div>
+        <div class="slide" data-tooltip="Open Source Hosting"><img src="https://i.ibb.co/M5Z0SJQV/github1.png" alt="GitHub" class="partner-logo"></div>
+        <div class="slide" data-tooltip="Python & Cryptography"><img src="https://i.ibb.co/JWsBD3sz/pyt.png" alt="Python" class="partner-logo" style="filter:grayscale(100%) brightness(0.65) invert(1);"></div>
+        <div class="slide" data-tooltip="Community Infrastructure"><img src="https://i.ibb.co/ymRh0VPc/italiman8712.png" alt="Infrastructure" class="partner-logo"></div>
+        <div class="slide" data-tooltip="In collaboration with GDSchool"><img src="https://i.ibb.co/SXnqwrNK/GDSL.png" alt="GDSchool" class="partner-logo"></div>
+        <div class="slide" data-tooltip="Open Source Hosting"><img src="https://i.ibb.co/M5Z0SJQV/github1.png" alt="GitHub" class="partner-logo"></div>
+        <div class="slide" data-tooltip="Python & Cryptography"><img src="https://i.ibb.co/JWsBD3sz/pyt.png" alt="Python" class="partner-logo" style="filter:grayscale(100%) brightness(0.65) invert(1);"></div>
+        <div class="slide" data-tooltip="Community Infrastructure"><img src="https://i.ibb.co/ymRh0VPc/italiman8712.png" alt="Infrastructure" class="partner-logo"></div>
+      </div>
+    </div>
+    <p class="legal-note">Trademarks belong to their respective owners. Used to showcase the open‑source ecosystem.<br>No commercial affiliation — AVGVSTO is independent and community‑driven.</p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<div class="faq-wrap" style="max-width:100%;">
+  <div style="max-width:900px;margin:0 auto;">
+    <span class="section-label reveal">INTEL</span>
+    <h2 class="section-title reveal">Frequently asked</h2>
+    <div class="reveal">
+      <div class="faq-item"><div class="faq-q"><span><span class="num">01</span> What happens if I lose the USB?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Your files are irrecoverable — that's the design. Hardware binding guarantees security. For critical data, use the built‑in backup mechanism (local only, encrypted with separate hardware).</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">02</span> Can I use any USB drive?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Yes. Any brand, capacity, FAT/NTFS/exFAT. The hardware serial and volume ID are read — not just the label. Cloning the filesystem onto a different drive won't work.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">03</span> Is there any backdoor or recovery?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Absolutely not. No cloud, no key escrow, no master password. Full source transparency guarantees it — audit every line yourself.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">04</span> How does duress mode work?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Provide a special duress password under coercion; it unlocks a decoy file system. Real data remains mathematically hidden. Both containers are forensically identical.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">05</span> What encryption algorithms are included?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">AES-256-GCM, ChaCha20-Poly1305, and cascade (AES→ChaCha20) with independent keys — all in the open source version. No algorithm is paywalled.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">06</span> Do I need admin rights?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Portable mode runs directly from USB without installation (standard user rights). Full install on Windows requires admin. Linux and macOS run as user.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">07</span> How does the anti‑bruteforce lockout reset?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">The lockout timer is persistent and hardware‑bound. It resets only after successful authentication with the correct USB + password. Each failure exponentially increases the delay, up to 1 month.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">08</span> Is the source code auditable?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Full source on GitHub (GPLv3). All cryptographic primitives are standard libraries. Deterministic builds. Third‑party audits are welcome and encouraged.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">09</span> Does cascade encryption impact performance?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Modern CPUs handle both ciphers with &lt;8% overhead. AES‑NI + AVX2 acceleration is used where available. Even on low-end hardware the difference is negligible for typical file sizes.</div></div>
+      <div class="faq-item"><div class="faq-q"><span><span class="num">10</span> Can I contribute?</span><i class="fas fa-chevron-down"></i></div><div class="faq-a">Yes. The project lives on GitHub. Open issues, submit PRs, improve documentation, audit the crypto — everyone is welcome. Stars are appreciated.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WEBAPP -->
+<section id="webapp" class="webapp-section">
+  <span class="section-label reveal">WEB APP</span>
+  <h2 class="section-title reveal">Crittografia via API<br><span style="color:var(--accent);">dal tuo browser.</span></h2>
+  <p class="section-sub reveal">Interfaccia web per le API AVGVSTO. Crittografa, decrittografa e gestisci le chiavi USB direttamente dal browser.</p>
+
+  <div class="reveal" style="margin-bottom:24px;">
+    <div class="status-row" style="display:flex;align-items:center;gap:12px;font-size:0.8rem;color:var(--text-mid);font-family:var(--mono);">
+      <span>Server:</span>
+      <span class="status-dot offline" id="waStatusDot"></span>
+      <span id="waStatusText">offline</span>
+      <span style="margin-left:auto;font-size:0.6rem;" id="waApiBase">https://api.avgvstousb.com/api/v1</span>
+    </div>
+  </div>
+
+  <div class="reveal">
+    <div class="webapp-tabs" id="waTabs">
+      <button class="webapp-tab active" data-wa="encrypt">Crittografa</button>
+      <button class="webapp-tab" data-wa="decrypt">Decrittografa</button>
+      <button class="webapp-tab" data-wa="verify">Verifica</button>
+      <button class="webapp-tab" data-wa="files">File</button>
+      <button class="webapp-tab" data-wa="keys">Chiavi USB</button>
+      <button class="webapp-tab" data-wa="auth">Account</button>
+      <button class="webapp-tab" data-wa="docs">API</button>
+    </div>
+
+    <!-- Encrypt -->
+    <div class="webapp-content active" id="wa-encrypt">
+      <div class="wa-card">
+        <h2>Crittografa testo</h2>
+        <p>Inserisci il testo da crittografare con AES-256-GCM o ChaCha20-Poly1305.</p>
+        <textarea id="waEncryptInput" placeholder="Testo segreto..."></textarea>
+        <div class="row">
+          <div>
+            <label>Cifrario</label>
+            <select id="waEncryptCipher"><option value="aes-256-gcm">AES-256-GCM</option><option value="chacha20-poly1305">ChaCha20-Poly1305</option></select>
+          </div>
+          <div>
+            <label>Passphrase</label>
+            <input type="password" id="waEncryptPassphrase" placeholder="Auto-generata se vuota">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Percorso chiave USB</label>
+            <input type="text" id="waEncryptUsbPath" placeholder="Es. E:\ (opzionale)">
+          </div>
+          <div style="flex:0;padding-bottom:14px;">
+            <label class="checkbox-label"><input type="checkbox" id="waEncryptDuress"> Duress</label>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="waEncrypt()">Crittografa</button>
+        <div class="wa-output" id="waEncryptOutput"></div>
+      </div>
+    </div>
+
+    <!-- Decrypt -->
+    <div class="webapp-content" id="wa-decrypt">
+      <div class="wa-card">
+        <h2>Decrittografa</h2>
+        <p>Incolla i dati crittografati (base64) e la passphrase per decrittografarli.</p>
+        <textarea id="waDecryptInput" placeholder="Dati crittografati in base64..."></textarea>
+        <input type="password" id="waDecryptPassphrase" placeholder="Passphrase">
+        <input type="text" id="waDecryptUsbPath" placeholder="Percorso chiave USB (opzionale)">
+        <button class="btn btn-primary" onclick="waDecrypt()">Decrittografa</button>
+        <div class="wa-output" id="waDecryptOutput"></div>
+      </div>
+    </div>
+
+    <!-- Verify -->
+    <div class="webapp-content" id="wa-verify">
+      <div class="wa-card">
+        <h2>Verifica formato</h2>
+        <p>Controlla se i dati sono in formato AVGVSTO valido.</p>
+        <textarea id="waVerifyInput" placeholder="Dati crittografati in base64..."></textarea>
+        <button class="btn btn-primary" onclick="waVerify()">Verifica</button>
+        <div class="wa-output" id="waVerifyOutput"></div>
+      </div>
+    </div>
+
+    <!-- Files -->
+    <div class="webapp-content" id="wa-files">
+      <div class="wa-card">
+        <h2>Crittografa file</h2>
+        <p>Carica un file da crittografare. Riceverai il file .avgvsto in base64.</p>
+        <div class="file-drop" id="waEncryptFileDrop" onclick="document.getElementById('waEncryptFile').click()">
+          <div id="waEncryptFileLabel">Trascina un file qui o clicca per selezionare</div>
+          <div class="filename hidden" id="waEncryptFileName"></div>
+        </div>
+        <input type="file" id="waEncryptFile" class="hidden" onchange="waHandleFileSelect('waEncryptFile','waEncryptFileLabel','waEncryptFileName')">
+        <div class="row">
+          <div>
+            <label>Cifrario</label>
+            <select id="waEncryptFileCipher"><option value="aes-256-gcm">AES-256-GCM</option><option value="chacha20-poly1305">ChaCha20-Poly1305</option></select>
+          </div>
+          <div>
+            <label>Passphrase</label>
+            <input type="password" id="waEncryptFilePassphrase" placeholder="Auto-generata se vuota">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="waEncryptFile()">Crittografa file</button>
+        <div class="wa-output" id="waEncryptFileOutput"></div>
+      </div>
+      <div class="wa-card">
+        <h2>Decrittografa file</h2>
+        <p>Carica un file .avgvsto crittografato.</p>
+        <div class="file-drop" id="waDecryptFileDrop" onclick="document.getElementById('waDecryptFile').click()">
+          <div id="waDecryptFileLabel">Trascina un file .avgvsto qui</div>
+          <div class="filename hidden" id="waDecryptFileName"></div>
+        </div>
+        <input type="file" id="waDecryptFile" class="hidden" onchange="waHandleFileSelect('waDecryptFile','waDecryptFileLabel','waDecryptFileName')">
+        <input type="password" id="waDecryptFilePassphrase" placeholder="Passphrase">
+        <button class="btn btn-primary" onclick="waDecryptFile()">Decrittografa file</button>
+        <div class="wa-output" id="waDecryptFileOutput"></div>
+      </div>
+    </div>
+
+    <!-- Keys -->
+    <div class="webapp-content" id="wa-keys">
+      <div class="wa-card">
+        <h2>Associa chiave USB</h2>
+        <p>Inserisci il percorso della tua chiave USB per associarla al tuo account.</p>
+        <input type="text" id="waBindUsbPath" placeholder="Es. E:\">
+        <button class="btn btn-primary" onclick="waBindUsb()">Associa</button>
+        <div class="wa-output" id="waBindUsbOutput"></div>
+      </div>
+      <div class="wa-card">
+        <h2>Chiavi associate</h2>
+        <div id="waKeysList"><p class="text-muted">Nessuna chiave associata.</p></div>
+        <button class="btn btn-outline" style="margin-top:14px;padding:10px 22px;font-size:0.6rem;" onclick="waListKeys()">Aggiorna lista</button>
+      </div>
+    </div>
+
+    <!-- Auth -->
+    <div class="webapp-content" id="wa-auth">
+      <div class="wa-card" id="waRegisterCard">
+        <h2>Registrati</h2>
+        <p>Crea un account per usare le API di crittografia.</p>
+        <input type="text" id="waRegUsername" placeholder="Username (3-64 caratteri)">
+        <input type="password" id="waRegPassword" placeholder="Password (min 8 caratteri)">
+        <button class="btn btn-primary" onclick="waRegister()">Registrati</button>
+        <div class="wa-output" id="waRegOutput"></div>
+      </div>
+      <div class="wa-card" id="waLoginCard">
+        <h2>Login</h2>
+        <input type="text" id="waLoginUsername" placeholder="Username">
+        <input type="password" id="waLoginPassword" placeholder="Password">
+        <button class="btn btn-primary" onclick="waLogin()">Accedi</button>
+        <div class="wa-output" id="waLoginOutput"></div>
+      </div>
+      <div class="wa-card" id="waProfileCard" style="display:none">
+        <h2>Profilo</h2>
+        <p style="margin-bottom:0;">Benvenuto <strong id="waProfileName" style="color:var(--accent);"></strong> (ruolo: <span id="waProfileRole"></span>)</p>
+        <p class="text-muted" style="margin-top:10px;">Sei autenticato. Ora puoi usare tutte le funzioni di crittografia.</p>
+      </div>
+    </div>
+
+    <!-- Docs -->
+    <div class="webapp-content" id="wa-docs">
+      <div class="wa-card">
+        <h2>API Reference</h2>
+        <p>Specifica OpenAPI disponibile su <code style="color:var(--accent);">https://api.avgvstousb.com/api/v1/openapi.json</code></p>
+        <table>
+          <tr><th>Metodo</th><th>Endpoint</th><th>Descrizione</th></tr>
+          <tr><td>POST</td><td>/api/v1/register</td><td>Crea account</td></tr>
+          <tr><td>POST</td><td>/api/v1/login</td><td>Ottieni JWT</td></tr>
+          <tr><td>POST</td><td>/api/v1/refresh</td><td>Rinnova token</td></tr>
+          <tr><td>POST</td><td>/api/v1/encrypt</td><td>Crittografa testo</td></tr>
+          <tr><td>POST</td><td>/api/v1/decrypt</td><td>Decrittografa</td></tr>
+          <tr><td>POST</td><td>/api/v1/verify</td><td>Verifica formato</td></tr>
+          <tr><td>POST</td><td>/api/v1/encrypt-file</td><td>Crittografa file</td></tr>
+          <tr><td>POST</td><td>/api/v1/decrypt-file</td><td>Decrittografa file</td></tr>
+          <tr><td>POST</td><td>/api/v1/keys/bind-usb</td><td>Associa chiave USB</td></tr>
+          <tr><td>GET</td><td>/api/v1/keys</td><td>Chiavi associate</td></tr>
+          <tr><td>GET</td><td>/api/v1/audit-log</td><td>Log audit (admin)</td></tr>
+          <tr><td>GET</td><td>/api/v1/health</td><td>Stato server</td></tr>
+          <tr><td>GET</td><td>/api/v1/openapi.json</td><td>Specifica OpenAPI</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <a href="#" class="logo"><img src="https://i.ibb.co/dsB0tnQ3/avl.png" alt="AVGVSTO" style="height:30px;"> <span style="font-size:1.1rem;">AVGVSTO</span> <span class="logo-badge">GPLv3</span></a>
+    <div class="footer-links">
+      <a href="https://github.com/RoyMerlo/AVGVSTO-USB" target="_blank" rel="noopener"><i class="fab fa-github"></i> Repository</a>
+      <a href="https://github.com/RoyMerlo" target="_blank" rel="noopener"><i class="fas fa-user"></i> Developer</a>
+      <a href="#download">Download</a>
+      <a href="#faq">FAQ</a>
+      <a href="files/avgv.pdf" target="_blank" rel="noopener">Whitepaper</a>
+      <a href="#tools">Tools</a>
+      <a href="#webapp">Web App</a>
+    </div>
+    <span style="font-family:var(--mono);font-size:0.58rem;color:var(--text-mid);">
+      © 2026 Roy Merlo &amp; <a href="https://github.com/Rp-ics" style="color:#93b9ff;text-decoration:none;">RPX</a> — open source, auditable, sovereign
+    </span>
+  </div>
+  <div class="footer-tech">
+    AES-256-GCM &nbsp;·&nbsp; CHACHA20-POLY1305 &nbsp;·&nbsp; PBKDF2-HMAC-SHA256 (1,000,000 iter) &nbsp;·&nbsp; USB HARDWARE FINGERPRINT &nbsp;·&nbsp; 100% OFFLINE &nbsp;·&nbsp; GPLV3 OPEN SOURCE
+  </div>
+</footer>
+
+<div class="lightbox" id="lb"><span class="lb-close">×</span><img id="lb-img" src="" alt=""></div>
+
+<div class="toast" id="waToast"></div>
 
 <script>
-const API = '/api/v1';
-document.getElementById('apiBaseUrl').textContent = API;
+// === Landing Page JS ===
+(function(){
+  const hdr=document.getElementById('hdr');
+  window.addEventListener('scroll',()=>hdr.classList.toggle('scrolled',scrollY>30));
 
-let token = localStorage.getItem('avgvsto_token');
-let userData = null;
+  const rev=document.querySelectorAll('.reveal');
+  const io=new IntersectionObserver((es)=>es.forEach((e,i)=>{if(e.isIntersecting)setTimeout(()=>e.target.classList.add('on'),i*55);}),{threshold:0.08});
+  rev.forEach(r=>io.observe(r));
 
-// --- Navigation ---
-document.querySelectorAll('nav a').forEach(a => {
-  a.addEventListener('click', () => {
-    document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-    a.classList.add('active');
-    document.getElementById('page-' + a.dataset.page).classList.add('active');
+  document.querySelectorAll('[data-target]').forEach(el=>{
+    const t=parseInt(el.dataset.target);
+    if(!t)return;
+    const obs=new IntersectionObserver(([en])=>{
+      if(!en.isIntersecting)return;
+      obs.unobserve(el);
+      let c=0;
+      const step=()=>{c+=Math.ceil(t/90);el.textContent=c<t?c.toLocaleString():t.toLocaleString();if(c<t)requestAnimationFrame(step);};
+      step();
+    });
+    obs.observe(el);
+  });
+
+  const lb=document.getElementById('lb'),lbImg=document.getElementById('lb-img');
+  document.querySelectorAll('.gallery-item img').forEach(img=>img.addEventListener('click',()=>{lbImg.src=img.src;lb.classList.add('open');}));
+  document.querySelector('.lb-close').addEventListener('click',()=>lb.classList.remove('open'));
+  lb.addEventListener('click',e=>{if(e.target===lb)lb.classList.remove('open');});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')lb.classList.remove('open');});
+
+  document.querySelectorAll('.faq-q').forEach(q=>{
+    q.addEventListener('click',()=>{
+      const open=q.parentElement.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i=>i.classList.remove('open'));
+      if(!open)q.parentElement.classList.add('open');
+    });
+  });
+
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click',e=>{
+      const t=document.querySelector(a.getAttribute('href'));
+      if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth'});}
+    });
+  });
+})();
+
+// === Webapp JS ===
+const WA_API = 'https://api.avgvstousb.com/api/v1';
+
+let waToken = localStorage.getItem('avgvsto_token');
+let waUserData = null;
+
+// Webapp tabs
+document.querySelectorAll('.webapp-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.webapp-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.webapp-content').forEach(x => x.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('wa-' + tab.dataset.wa).classList.add('active');
   });
 });
 
-// --- Toast ---
-function toast(msg, type) {
-  const t = document.getElementById('toast');
+// Toast
+function waToast(msg, type) {
+  const t = document.getElementById('waToast');
   t.textContent = msg; t.className = 'toast show ' + type;
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// --- API call ---
-async function api(method, path, body) {
+// API call
+async function waApi(method, path, body) {
   const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (waToken) headers['Authorization'] = 'Bearer ' + waToken;
   try {
-    const res = await fetch(API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    const res = await fetch(WA_API + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
     const text = await res.text();
     let data;
     try { data = JSON.parse(text); } catch { data = { error: text }; }
-    if (res.status === 401 && token) { token = null; localStorage.removeItem('avgvsto_token'); updateAuthUI(); }
+    if (res.status === 401 && waToken) { waToken = null; localStorage.removeItem('avgvsto_token'); waUpdateAuthUI(); }
     return { ok: res.ok, status: res.status, data };
   } catch (e) {
     return { ok: false, status: 0, data: { error: 'Errore di connessione: ' + e.message } };
   }
 }
 
-// --- Auth UI ---
-function updateAuthUI() {
-  const badge = document.getElementById('userBadge');
-  const reg = document.getElementById('registerCard');
-  const login = document.getElementById('loginCard');
-  const profile = document.getElementById('profileCard');
-  if (token && userData) {
-    badge.classList.add('show');
-    document.getElementById('userName').textContent = userData.username;
-    document.getElementById('userRole').textContent = userData.role;
+// Auth UI
+function waUpdateAuthUI() {
+  const reg = document.getElementById('waRegisterCard');
+  const login = document.getElementById('waLoginCard');
+  const profile = document.getElementById('waProfileCard');
+  if (waToken && waUserData) {
     reg.style.display = 'none';
     login.style.display = 'none';
     profile.style.display = 'block';
-    document.getElementById('profileName').textContent = userData.username;
-    document.getElementById('profileRole').textContent = userData.role;
+    document.getElementById('waProfileName').textContent = waUserData.username;
+    document.getElementById('waProfileRole').textContent = waUserData.role;
   } else {
-    badge.classList.remove('show');
     reg.style.display = 'block';
     login.style.display = 'block';
     profile.style.display = 'none';
   }
 }
 
-function logout() { token = null; userData = null; localStorage.removeItem('avgvsto_token'); updateAuthUI(); toast('Disconnesso', 'success'); }
+function waLogout() { waToken = null; waUserData = null; localStorage.removeItem('avgvsto_token'); waUpdateAuthUI(); waToast('Disconnesso', 'success'); }
 
-// --- Register ---
-async function register() {
-  const r = await api('POST', '/register', { username: document.getElementById('regUsername').value, password: document.getElementById('regPassword').value });
-  showOutput('regOutput', r.ok, r.data);
-  if (r.ok) toast('Registrato! Ora fai login.', 'success');
+// Register
+async function waRegister() {
+  const r = await waApi('POST', '/register', { username: document.getElementById('waRegUsername').value, password: document.getElementById('waRegPassword').value });
+  waShowOutput('waRegOutput', r.ok, r.data);
+  if (r.ok) waToast('Registrato! Ora fai login.', 'success');
 }
 
-// --- Login ---
-async function login() {
-  const r = await api('POST', '/login', { username: document.getElementById('loginUsername').value, password: document.getElementById('loginPassword').value });
-  showOutput('loginOutput', r.ok, r.data);
+// Login
+async function waLogin() {
+  const r = await waApi('POST', '/login', { username: document.getElementById('waLoginUsername').value, password: document.getElementById('waLoginPassword').value });
+  waShowOutput('waLoginOutput', r.ok, r.data);
   if (r.ok && r.data.access_token) {
-    token = r.data.access_token;
-    localStorage.setItem('avgvsto_token', token);
-    userData = { username: r.data.user_id, role: r.data.role };
-    // Decode JWT to get username
+    waToken = r.data.access_token;
+    localStorage.setItem('avgvsto_token', waToken);
+    waUserData = { username: r.data.user_id, role: r.data.role };
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      userData = { username: payload.username || 'user', role: payload.role || 'user' };
+      const payload = JSON.parse(atob(waToken.split('.')[1]));
+      waUserData = { username: payload.username || 'user', role: payload.role || 'user' };
     } catch {}
-    updateAuthUI();
-    toast('Login effettuato!', 'success');
+    waUpdateAuthUI();
+    waToast('Login effettuato!', 'success');
   }
 }
 
-// --- Encrypt ---
-async function encrypt() {
-  const body = { data: document.getElementById('encryptInput').value, cipher: document.getElementById('encryptCipher').value };
-  const pp = document.getElementById('encryptPassphrase').value;
+// Encrypt
+async function waEncrypt() {
+  const body = { data: document.getElementById('waEncryptInput').value, cipher: document.getElementById('waEncryptCipher').value };
+  const pp = document.getElementById('waEncryptPassphrase').value;
   if (pp) body.passphrase = pp;
-  const usb = document.getElementById('encryptUsbPath').value;
+  const usb = document.getElementById('waEncryptUsbPath').value;
   if (usb) body.usb_key_path = usb;
-  if (document.getElementById('encryptDuress').checked) body.use_duress = true;
-  if (!body.data) return toast('Inserisci il testo da crittografare', 'error');
-  const r = await api('POST', '/encrypt', body);
-  showOutput('encryptOutput', r.ok, r.data);
-  if (r.ok) toast('Testo crittografato!', 'success');
+  if (document.getElementById('waEncryptDuress').checked) body.use_duress = true;
+  if (!body.data) return waToast('Inserisci il testo da crittografare', 'error');
+  const r = await waApi('POST', '/encrypt', body);
+  waShowOutput('waEncryptOutput', r.ok, r.data);
+  if (r.ok) waToast('Testo crittografato!', 'success');
 }
 
-// --- Decrypt ---
-async function decrypt() {
-  const body = { encrypted_data: document.getElementById('decryptInput').value, passphrase: document.getElementById('decryptPassphrase').value };
-  const usb = document.getElementById('decryptUsbPath').value;
+// Decrypt
+async function waDecrypt() {
+  const body = { encrypted_data: document.getElementById('waDecryptInput').value, passphrase: document.getElementById('waDecryptPassphrase').value };
+  const usb = document.getElementById('waDecryptUsbPath').value;
   if (usb) body.usb_key_path = usb;
-  if (!body.encrypted_data) return toast('Inserisci i dati crittografati', 'error');
-  const r = await api('POST', '/decrypt', body);
-  showOutput('decryptOutput', r.ok, r.data);
-  if (r.ok) toast('Testo decrittografato!', 'success');
+  if (!body.encrypted_data) return waToast('Inserisci i dati crittografati', 'error');
+  const r = await waApi('POST', '/decrypt', body);
+  waShowOutput('waDecryptOutput', r.ok, r.data);
+  if (r.ok) waToast('Testo decrittografato!', 'success');
 }
 
-// --- Verify ---
-async function verify() {
-  const data = document.getElementById('verifyInput').value;
-  if (!data) return toast('Inserisci i dati da verificare', 'error');
-  const r = await api('POST', '/verify', { encrypted_data: data });
-  showOutput('verifyOutput', r.ok, r.data);
+// Verify
+async function waVerify() {
+  const data = document.getElementById('waVerifyInput').value;
+  if (!data) return waToast('Inserisci i dati da verificare', 'error');
+  const r = await waApi('POST', '/verify', { encrypted_data: data });
+  waShowOutput('waVerifyOutput', r.ok, r.data);
 }
 
-// --- File handlers ---
-function handleFileSelect(inputId, labelId, nameId) {
+// File handlers
+function waHandleFileSelect(inputId, labelId, nameId) {
   const file = document.getElementById(inputId).files[0];
   if (!file) return;
   document.getElementById(labelId).textContent = 'File selezionato:';
@@ -386,86 +1114,82 @@ function handleFileSelect(inputId, labelId, nameId) {
   document.getElementById(inputId.replace('File', 'Drop')).classList.add('has-file');
 }
 
-async function encryptFile() {
-  const fileInput = document.getElementById('encryptFile');
-  if (!fileInput.files.length) return toast('Seleziona un file', 'error');
+async function waEncryptFile() {
+  const fileInput = document.getElementById('waEncryptFile');
+  if (!fileInput.files.length) return waToast('Seleziona un file', 'error');
   const form = new FormData();
   form.append('file', fileInput.files[0]);
-  const pp = document.getElementById('encryptFilePassphrase').value;
+  const pp = document.getElementById('waEncryptFilePassphrase').value;
   if (pp) form.append('passphrase', pp);
-  form.append('cipher', document.getElementById('encryptFileCipher').value);
+  form.append('cipher', document.getElementById('waEncryptFileCipher').value);
   const headers = {};
-  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (waToken) headers['Authorization'] = 'Bearer ' + waToken;
   try {
-    const res = await fetch(API + '/encrypt-file', { method: 'POST', headers, body: form });
+    const res = await fetch(WA_API + '/encrypt-file', { method: 'POST', headers, body: form });
     const text = await res.text();
     const data = JSON.parse(text);
-    showOutput('encryptFileOutput', res.ok, data);
-    if (res.ok) toast('File crittografato!', 'success');
+    waShowOutput('waEncryptFileOutput', res.ok, data);
+    if (res.ok) waToast('File crittografato!', 'success');
   } catch (e) {
-    showOutput('encryptFileOutput', false, { error: 'Errore: ' + e.message });
+    waShowOutput('waEncryptFileOutput', false, { error: 'Errore: ' + e.message });
   }
 }
 
-async function decryptFile() {
-  const fileInput = document.getElementById('decryptFile');
-  if (!fileInput.files.length) return toast('Seleziona un file .avgvsto', 'error');
+async function waDecryptFile() {
+  const fileInput = document.getElementById('waDecryptFile');
+  if (!fileInput.files.length) return waToast('Seleziona un file .avgvsto', 'error');
   const form = new FormData();
   form.append('file', fileInput.files[0]);
-  const pp = document.getElementById('decryptFilePassphrase').value;
+  const pp = document.getElementById('waDecryptFilePassphrase').value;
   if (pp) form.append('passphrase', pp);
   const headers = {};
-  if (token) headers['Authorization'] = 'Bearer ' + token;
+  if (waToken) headers['Authorization'] = 'Bearer ' + waToken;
   try {
-    const res = await fetch(API + '/decrypt-file', { method: 'POST', headers, body: form });
+    const res = await fetch(WA_API + '/decrypt-file', { method: 'POST', headers, body: form });
     const text = await res.text();
     const data = JSON.parse(text);
-    showOutput('decryptFileOutput', res.ok, data);
+    waShowOutput('waDecryptFileOutput', res.ok, data);
     if (res.ok) {
-      // Download decrypted file
-      const decrypted = Uint8Array.from(atob(atob(data.data)), c => c.charCodeAt(0));
-      // Actually data is Vec<u8> which is a raw byte array
-      // Let's just show the decoded text if it's text, or offer download
       const blob = new Blob([data.data]);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'decrypted_' + (document.getElementById('decryptFile').files[0].name.replace('.avgvsto',''));
+      a.download = 'decrypted_' + (document.getElementById('waDecryptFile').files[0].name.replace('.avgvsto',''));
       a.click();
-      toast('File decrittografato!', 'success');
+      waToast('File decrittografato!', 'success');
     }
   } catch (e) {
-    showOutput('decryptFileOutput', false, { error: 'Errore: ' + e.message });
+    waShowOutput('waDecryptFileOutput', false, { error: 'Errore: ' + e.message });
   }
 }
 
-// --- USB Keys ---
-async function bindUsb() {
-  const path = document.getElementById('bindUsbPath').value;
-  if (!path) return toast('Inserisci il percorso della chiave USB', 'error');
-  const r = await api('POST', '/keys/bind-usb', { usb_path: path });
-  showOutput('bindUsbOutput', r.ok, r.data);
-  if (r.ok) { toast('Chiave USB associata!', 'success'); listKeys(); }
+// USB Keys
+async function waBindUsb() {
+  const path = document.getElementById('waBindUsbPath').value;
+  if (!path) return waToast('Inserisci il percorso della chiave USB', 'error');
+  const r = await waApi('POST', '/keys/bind-usb', { usb_path: path });
+  waShowOutput('waBindUsbOutput', r.ok, r.data);
+  if (r.ok) { waToast('Chiave USB associata!', 'success'); waListKeys(); }
 }
 
-async function listKeys() {
-  const r = await api('GET', '/keys');
-  const el = document.getElementById('keysList');
+async function waListKeys() {
+  const r = await waApi('GET', '/keys');
+  const el = document.getElementById('waKeysList');
   if (r.ok && r.data.length) {
-    el.innerHTML = '<table><tr><th>ID</th><th>Mount</th><th>Data</th></tr>' + r.data.map(k => '<tr><td style="font-family:monospace;font-size:0.75rem">' + k.key_identifier.substring(0,16) + '...</td><td>' + (k.mount_path || '-') + '</td><td>' + new Date(k.bound_at).toLocaleDateString() + '</td></tr>').join('') + '</table>';
+    el.innerHTML = '<table><tr><th>ID</th><th>Mount</th><th>Data</th></tr>' + r.data.map(k => '<tr><td style="font-family:var(--mono);font-size:0.7rem;">' + (k.key_identifier ? k.key_identifier.substring(0,16) : '—') + '...</td><td>' + (k.mount_path || '-') + '</td><td>' + (k.bound_at ? new Date(k.bound_at).toLocaleDateString() : '—') + '</td></tr>').join('') + '</table>';
   } else {
     el.innerHTML = '<p class="text-muted">Nessuna chiave associata.</p>';
   }
 }
 
-// --- Helpers ---
-function showOutput(id, ok, data) {
+// Helpers
+function waShowOutput(id, ok, data) {
   const el = document.getElementById(id);
   el.textContent = ok ? JSON.stringify(data, null, 2) : 'ERRORE: ' + (data.error || JSON.stringify(data));
-  el.className = 'output show ' + (ok ? 'success' : 'error');
+  el.className = 'wa-output show ' + (ok ? 'success' : 'error');
 }
 
-// --- Drag & Drop for file areas ---
+// Drag & Drop
 document.querySelectorAll('.file-drop').forEach(drop => {
   drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
@@ -473,38 +1197,44 @@ document.querySelectorAll('.file-drop').forEach(drop => {
     e.preventDefault(); drop.classList.remove('dragover');
     const file = e.dataTransfer.files[0];
     if (!file) return;
-    const inputId = drop.id.replace('Drop', '').replace('encrypt','encryptFile').replace('decrypt','decryptFile');
+    const inputId = drop.id.replace('Drop', '');
     const input = document.getElementById(inputId);
     const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files;
     const event = new Event('change'); input.dispatchEvent(event);
   });
 });
 
-// --- Health check ---
-async function checkHealth() {
+// Health check
+async function waCheckHealth() {
+  const dot = document.getElementById('waStatusDot');
+  const text = document.getElementById('waStatusText');
   try {
-    const res = await fetch(API + '/health');
+    const res = await fetch(WA_API + '/health');
     const data = await res.json();
-    document.getElementById('statusDot').className = 'dot ' + (res.ok ? 'online' : 'offline');
-    document.getElementById('statusText').textContent = res.ok ? ('v' + data.version + ' — online') : 'errore';
+    dot.className = 'status-dot ' + (res.ok ? 'online' : 'offline');
+    text.textContent = res.ok ? ('v' + data.version + ' — online') : 'errore';
   } catch {
-    document.getElementById('statusDot').className = 'dot offline';
-    document.getElementById('statusText').textContent = 'offline';
+    dot.className = 'status-dot offline';
+    text.textContent = 'offline';
   }
 }
 
-// Try to restore session from stored token
-if (token) {
+// Restore session
+if (waToken) {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    userData = { username: payload.username || 'user', role: payload.role || 'user' };
-    updateAuthUI();
-    listKeys();
-  } catch { token = null; localStorage.removeItem('avgvsto_token'); }
+    const payload = JSON.parse(atob(waToken.split('.')[1]));
+    waUserData = { username: payload.username || 'user', role: payload.role || 'user' };
+    waUpdateAuthUI();
+    waListKeys();
+  } catch { waToken = null; localStorage.removeItem('avgvsto_token'); }
 }
 
-setInterval(checkHealth, 15000);
-checkHealth();
+setInterval(waCheckHealth, 15000);
+waCheckHealth();
 </script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@200;300;400;600;800&display=swap" rel="stylesheet">
 </body>
 </html>
